@@ -1,0 +1,5 @@
+$(HOME)/bin/xpipe: xpipe.c
+	gccopt -s -o $(HOME)/bin/xpipe xpipe.c
+
+xpipetest: xpipetest.c $(HOME)/bin/xpipe
+	gccopt -g -o xpipetest xpipetest.c

@@ -1,0 +1,10 @@
+cd $HOME/cworks
+
+gnutar -cPzf ../Archive/tools.tar.gz \
+	tools/*.[cCmh1] \
+	tools/*.cpp \
+	tools/*local-settings \
+	tools/Make \
+	../include/local
+
+# rcp -p ../archive/tools.tar.gz alive:cworks

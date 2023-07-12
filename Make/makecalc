@@ -1,0 +1,23 @@
+#   File:       calc.make
+#   Target:     calc
+#   Sources:    calcwn.C calc_fun.c
+#   Created:    Wednesday, August 1, 1990 12:28:01
+
+#for Apollo workstations
+
+OBJECTS = obj/calcwn.o obj/calc_fun.o
+CUSLIBS_F = ../../lib/libRJB.a ../../lib/libRJBx.a
+CUSLIBS=-L../../lib -lRJB -lRJBx -lRJB
+DEBUG=
+CFLAGS = -DFP_BINARY $(DEBUG)
+CC = gccopt
+
+calc : $(MAKEDIR)makecalc $(OBJECTS) $(CUSLIBS_F)
+	$(CC) -o calc $(CFLAGS) $(OBJECTS) $(CUSLIBS) -lm
+	touch .make_success
+
+obj/calcwn.o: calcwn.c
+	$(CC) $(CFLAGS) -o obj/calcwn.o -c calcwn.c
+
+obj/calc_fun.o: calc_fun.c
+	$(CC) $(CFLAGS) -o obj/calc_fun.o -c calc_fun.c

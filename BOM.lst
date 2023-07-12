@@ -1,0 +1,73 @@
+  96857  9 -rwxr-x--- 1 bertin   1000   364 Dec 21  1991 ctagstest.c*
+  96923  9 -rwxr-x--- 1 bertin   1000   495 Dec 21  1991 toupper.c*
+  96922  9 -rwxr-x--- 1 bertin   1000   508 Dec 21  1991 tolower.c*
+  96937  9 -rwxr-x--- 1 bertin   1000  2406 Dec 21  1991 xpipeold.c*
+  96929 25 -rwxr-x--- 1 bertin   1000 21518 Dec 21  1991 xbin.c*
+  96938  9 -rwxr-x--- 1 bertin   1000   764 Jan  2  1992 xterm_title.c*
+  96910 25 -rwxr-x--- 1 bertin   1000 15591 Nov 25  1992 resize.c*
+  96941 17 -rwxr-x--- 1 bertin   1000  9127 Mar 11  1996 xxdecode.c*
+  96897 17 -rwxr-x--- 1 bertin   1000  7363 Apr 19  1996 lock_term.c*
+  96916  9 -rwxr-x--- 1 bertin   1000  2366 Sep 19  1996 sleep.c*
+  96849  9 -rwxr-x--- 1 bertin   1000  3519 Sep  9  1997 bsplit.c*
+  96895  9 -rwxr-x--- 1 bertin   1000   136 Feb  9  2000 line.c*
+  96737  9 -rwxr-x--- 1 bertin   1000   385 Jul  3  2000 ascii.c*
+  96924  9 -rwxr-x--- 1 bertin   1000  4177 Dec  3  2000 ts.c*
+  96736 17 -rwxr-x--- 1 bertin   1000  6512 Jun 21  2002 alloca.c*
+  96730  9 -rwxr-x--- 1 bertin   1000  1812 Jun 21  2002 ALLOCA.h*
+  96917  9 -rwxr-x--- 1 bertin   1000  1014 Oct  8  2002 substlist.c*
+  96903  9 -rwxr-x--- 1 bertin   1000  3694 Nov  5  2002 perl.c*
+  96876  9 -rwxr-x--- 1 bertin   1000  4027 Feb  7  2003 gs-latest.c*
+  96877  9 -rwxr-x--- 1 bertin   1000   921 Mar  9  2003 hostid.c*
+  96853  9 -rwxr-x--- 1 bertin   1000  4711 May 15  2003 cc.c*
+  96731  9 -rwxr-x--- 1 bertin   1000  4830 Feb  4  2005 CTS-Serial-Trigger.c*
+  96930  9 -rwxr-x--- 1 bertin   1000  2365 Mar  9  2005 xboing.c*
+  96775 17 -rwxr-x--- 1 bertin   1000 11792 Mar 12  2005 benchmark-macstl.h*
+  96898 17 -rwxr-x--- 1 bertin   1000  9419 Sep 19  2005 macbroadcast.c*
+  96874  9 -rwxr-x--- 1 bertin   1000  6781 Nov 23  2005 gexpr.c*
+  96927  9 -rwxr-x--- 1 bertin   1000   682 Jun 20  2007 unescape.c*
+  96882  9 -rwxr-x--- 1 bertin   1000  1189 Jun 17  2008 itoa.c*
+  96855 41 -rwxr-x--- 1 bertin   1000 41040 Jul 25  2008 ctags.c*
+  96854  9 -rwxr-x--- 1 bertin   1000  2103 Nov 30  2008 complex.h*
+  96892  9 -rwxr-x--- 1 bertin   1000  9511 Apr 22  2009 libm.h*
+  96915 17 -rwxr-x--- 1 bertin   1000 11297 Apr 22  2009 sincos.c*
+  96931  9 -rwxr-x--- 1 bertin   1000  4675 May 18  2009 xcopy.c*
+  96906 17 -rwxr-x--- 1 bertin   1000  6936 Nov 26  2009 pythonw.c*
+  96869 17 -rwxr-x--- 1 bertin   1000 15569 Dec  1  2009 fgcc.c*
+  96918  9 -rwxr-x--- 1 bertin   1000   805 Mar 26  2010 system.c*
+  96912 17 -rwxr-x--- 1 bertin   1000 11875 Mar 26  2010 rhostname.c*
+  96860 17 -rwxr-x--- 1 bertin   1000  9721 Mar 26  2010 cut.c*
+  96851  9 -rwxr-x--- 1 bertin   1000  7669 Jun 24  2010 calc_fun.c*
+  96940  9 -rwxr-x--- 1 bertin   1000  1629 Oct 11  2010 xwindowborder.c*
+  96933  9 -rwxr-x--- 1 bertin   1000  1505 Oct 11  2010 xiconify.c*
+  96852 17 -rwxr-x--- 1 bertin   1000 13516 Dec 15  2010 calcwn.c*
+  96753 33 -rwxr-x--- 1 bertin   1000 35215 Mar 30  2011 bench-flops.c*
+  96920  9 -rwxr-x--- 1 bertin   1000  1720 Sep 28  2011 timestamp.c*
+  96925 25 -rwxr-x--- 1 bertin   1000 24709 Oct 19  2011 tx.c*
+1086566  9 -rw-r--r-- 1 bertin   1000  5094 Feb 17  2014 alsa_hw_capabilities.c
+  59447  9 -rw-r--r-- 1 bertin bertin   391 Nov 21  2014 demangle.cpp
+  96734  9 -rwxr-x--- 1 bertin   1000  7588 Feb  4  2016 YamboCheck.cpp*
+1205030  9 -rwxrwx--- 1 bertin bertin  1037 Sep 18  2016 execve.c*
+1253334 17 -rwxr-x--- 1 bertin bertin 12968 Sep  6  2018 rhostname2.c*
+  96935  9 -rwxr-x--- 1 bertin   1000  5240 Mar 26  2020 xping.c*
+ 677946  9 -rwxr-x--- 1 bertin bertin   428 Apr 21  2020 isatty.c*
+1334516  9 -rw-rwx--- 1 bertin bertin  1945 May 16 01:07 dlsym.c*
+ 867834  9 -rw-rw-r-- 1 bertin bertin  1871 Jul  6 14:00 open.c
+  96879 25 -rwxr-x--- 1 bertin   1000 19990 Jul 12 14:17 hostnm.c*
+
+local:
+total 101
+957196  9 -rw-r-----  1 bertin bertin  900 Oct 16  2002 cpu.h
+957198  9 -rwxr-x---  1 bertin bertin  774 May 28  2012 defun.h*
+957194  9 -rwxr-x---  1 bertin bertin 7585 Feb  4  2016 Macros.h*
+957312  1 drwxrwxr-x  2 bertin bertin    5 Jul 12 14:45 ./
+ 30722 73 drwxr-xr-x 16 bertin   1000  262 Jul 12 14:52 ../
+
+Make:
+total 112
+ 96947  1 -rwxr-x---  1 bertin 1000 145 Sep 29  1992 makexpipe*
+ 96945  9 -rwxr-x---  1 bertin 1000 307 Dec 22  1992 makectags*
+ 96946  1 -rwxr-x---  1 bertin 1000 101 Sep 13  2006 makexping*
+ 96943  9 -rwxr-x---  1 bertin 1000 194 Mar 26  2010 make_archive*
+680287  9 -rwxr-x---  1 bertin 1000 607 Jan  6  2014 makecalc*
+ 95951 13 drwxr-xr-x  2 bertin 1000   7 Jan  6  2014 ./
+ 30722 73 drwxr-xr-x 15 bertin 1000 260 Jul 12 14:40 ../

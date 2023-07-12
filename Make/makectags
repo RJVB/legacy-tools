@@ -1,0 +1,16 @@
+#   File:       ctags.make
+#   Target:     ctags
+#   Sources:    CTAGS.C
+#   Created:    Friday, December 21, 1990 11:55:43
+
+
+OBJECTS = ctags.c
+CFLAGS = $(DEBUG)
+CC = gccopt
+
+ctags : ctags.c
+	 $(CC)  $(CFLAGS) ctags.c -o ctags
+	 touch .make_success
+
+ctagsP : ctags.c
+	 cc  -O -p $(CFLAGS) ctags.c -o ctagsP

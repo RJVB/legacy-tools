@@ -1,0 +1,5 @@
+TARGET=xping
+
+$(TARGET): $(TARGET).c
+	gccopt -o $(TARGET) $(TARGET).c -lX11 -lm
+	strip -Sx $(TARGET)
