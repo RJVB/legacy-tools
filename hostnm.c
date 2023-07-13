@@ -8,12 +8,12 @@
 
 #define _INCLUDE_HPUX_SOURCE
 
-#include <netdb.h>
-
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
+#include <netdb.h>
 
 #ifndef _AIX
 extern int h_errno;
@@ -407,7 +407,7 @@ int do_whois(const char *whost, const StringList *qhosts, const char *qhost)
 
 /* ================================================== end whois code =============================================== */
 
-int silent = 1, whois = 0;
+int silent = 1, whois = 0, gai_protocol = IPPROTO_TCP;
 
 StringList *wquery = NULL;
 
@@ -598,7 +598,7 @@ int main(int argc, char **argv)
 	static int Argc;
 
 	if ((Argc = argc) < 2) {
-		fprintf(stderr, "usage: [env WHOISS=whois.server.host] %s [-q|-v|-v2|-w|-w2|-w3|-w4] address..\n", argv[0]);
+		fprintf(stderr, "usage: [env WHOISS=whois.server.host] %s [-q|-qa|-v|-v2|-w|-w2|-w3|-w4] address..\n", argv[0]);
 		exit(10);
 	}
 	exename = argv[0];
@@ -628,7 +628,11 @@ int main(int argc, char **argv)
 		} else if (!strcmp(argv[i], "-w4")) {
 			whois = 4;
 			goto next_argument;
+		} else if (!strcmp(argv[i], "-u")) {
+			gai_protocol = IPPROTO_UDP;
+			goto next_argument;
 		}
+
 		is_addr = 1;
 		for (c = argv[i]; *c && is_addr; c++) {
 			if (!(isdigit(*c) || *c == '.' || *c == ':' || strchr("ABCDEFX", toupper(*c)))) {
@@ -802,8 +806,47 @@ int main(int argc, char **argv)
 				do_whois(whost, NULL, argv[i]);
 			}
 		}
-	next_argument:
-		;
+		if (silent != 2 && silent != 3) {
+			struct addrinfo *res = NULL, hints;
+			memset(&hints, 0, sizeof(hints));
+			hints.ai_flags = AI_ADDRCONFIG|AI_V4MAPPED|AI_ALL|AI_CANONNAME;
+			hints.ai_family = AF_UNSPEC;
+			hints.ai_protocol = gai_protocol;
+			int gai_ret = getaddrinfo(argv[i], NULL, &hints, &res);
+			if (gai_ret == 0) {
+				struct addrinfo *r = res;
+				int n = 0;
+				fprintf(stdout, "## Data from getaddrinfo(\"%s\") for %s:\n",
+						argv[i], (gai_protocol == IPPROTO_TCP)? "TCP" : "UDP");
+				while (r) {
+					char ipaddr[INET6_ADDRSTRLEN+INET_ADDRSTRLEN+1];
+			        if (r->ai_addr->sa_family == AF_INET) {
+			            struct sockaddr_in *addr4 = (struct sockaddr_in *) r->ai_addr;
+			            inet_ntop(AF_INET, &addr4->sin_addr, ipaddr, INET_ADDRSTRLEN);
+			        }
+			        else if (r->ai_addr->sa_family == AF_INET6) {
+			            struct sockaddr_in6 *addr6 = (struct sockaddr_in6 *) r->ai_addr;
+			            inet_ntop(AF_INET6, &addr6->sin6_addr, ipaddr, INET6_ADDRSTRLEN);
+			        }
+					fprintf(stdout, "\t%s [%s] (flags=%d fam=%s prot=%d)\n",
+							(n == 0)?
+								(r->ai_canonname && strcmp(r->ai_canonname, ipaddr))?
+									r->ai_canonname : "[Unknown host]"
+								: "\t",
+							ipaddr,
+							r->ai_flags, (r->ai_family == AF_INET6)? "IPv6" : "IPv4",
+							r->ai_protocol);
+					r = r->ai_next, ++n;
+				}
+				freeaddrinfo(res);
+			} else {
+				fprintf(stderr, "## Error from getaddrinfo(\"%s\") for %s: %s\n",
+						argv[i], (gai_protocol == IPPROTO_TCP)? "TCP" : "UDP", gai_strerror(gai_ret));
+			}
+
+			fprintf(stdout, "--------\n");
+		}
+next_argument:;
 	}
 	endhostent();
 	exit(0);
