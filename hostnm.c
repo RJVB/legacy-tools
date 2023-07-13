@@ -828,13 +828,13 @@ int main(int argc, char **argv)
 			            struct sockaddr_in6 *addr6 = (struct sockaddr_in6 *) r->ai_addr;
 			            inet_ntop(AF_INET6, &addr6->sin6_addr, ipaddr, INET6_ADDRSTRLEN);
 			        }
-					fprintf(stdout, "\t%s [%s] (flags=%d fam=%s prot=%d)\n",
+					fprintf(stdout, "\t%s [%s] (fam=%s prot=%d)\n",
 							(n == 0)?
 								(r->ai_canonname && strcmp(r->ai_canonname, ipaddr))?
 									r->ai_canonname : "[Unknown host]"
 								: "\t",
 							ipaddr,
-							r->ai_flags, (r->ai_family == AF_INET6)? "IPv6" : "IPv4",
+							(r->ai_family == AF_INET6)? "IPv6" : "IPv4",
 							r->ai_protocol);
 					r = r->ai_next, ++n;
 				}
