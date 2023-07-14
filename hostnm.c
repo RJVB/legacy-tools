@@ -844,7 +844,9 @@ int main(int argc, char **argv)
 						argv[i], (gai_protocol == IPPROTO_TCP)? "TCP" : "UDP", gai_strerror(gai_ret));
 			}
 
-			fprintf(stdout, "--------\n");
+			if (i < Argc - 1) {
+			    fprintf(stdout, "--------\n");
+			}
 		}
 next_argument:;
 	}
