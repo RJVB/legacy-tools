@@ -21,8 +21,8 @@ IDENTIFY( "Small utility to ping an X11 server (test its presence)");
 // "try to connect to server with timeout" test.
 
 extern int errno;
-#if !defined(linux) && !defined(__MACH__) && !defined(__APPLE_CC__) && !defined(__CYGWIN__)
-extern char *sys_errlist[];
+#if !defined(linux) && !defined(__MACH__) && !defined(__APPLE_CC__) && !defined(__CYGWIN__) && !defined(__sun)
+	extern char *sys_errlist[];
 #endif
 
 #ifdef _AUX_SOURCE
@@ -143,7 +143,12 @@ main( int argc, char **argv)
 		else if( !(display= XOpenDisplay( displayname)) ){
 			if( errno){
 				fprintf( stderr, "%s: can't open display '%s' (%s)\n",
-					argv[0], displayname, sys_errlist[errno]
+					argv[0], displayname,
+#if !defined(linux) && !defined(__MACH__) && !defined(__APPLE_CC__) && !defined(__CYGWIN__) && !defined(__sun)
+					sys_errlist[errno]
+#else
+					strerror(errno)
+#endif
 				);
 			}
 			else{

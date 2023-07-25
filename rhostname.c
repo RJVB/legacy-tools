@@ -1,10 +1,11 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <errno.h>
 
 #include <string.h>
 
 #include <sys/types.h>
-#ifdef sgi
+#if defined(sgi) || defined(__sun)
 #	include <utmpx.h>
 	typedef struct utmpx	utmp;
 #	define utmpname	utmpxname
@@ -35,12 +36,14 @@ extern int h_errno;
 #endif
 
 
-#if  !defined(linux) && !defined(__MACH__) && !defined(__APPLE_CC__) && !defined(__CYGWIN__)
+#if  !defined(linux) && !defined(__MACH__) && !defined(__APPLE_CC__) && !defined(__CYGWIN__) && !defined(__sun)
 extern int errno, sys_nerr;
 extern char *sys_errlist[];
-#endif
-#define serror()	((errno==0)?"No Error":\
+#	define serror()	((errno==0)?"No Error":\
 					(errno<sys_nerr)?sys_errlist[errno]:"Invalid errno")
+#else
+#	define serror()	strerror(errno)
+#endif
 
 #ifdef _APOLLO_SOURCE
 #	define HNLENGTH	32
@@ -48,7 +51,7 @@ extern char *sys_errlist[];
 #	define HNLENGTH	256	/* 16	*/
 #endif
 
-#if !defined(sgi) && !defined(linux) && !defined(_AIX) && !defined(__CYGWIN__)
+#if !defined(sgi) && !defined(linux) && !defined(_AIX) && !defined(__CYGWIN__) && !defined(__sun)
 	extern struct utmp *getutent(void);
 	extern struct utmp *getutid(struct utmp *);
 	extern utmp *getutline(utmp *);
@@ -65,6 +68,7 @@ char *type_name[]= {
 	"USER_PROCESS",
 	"DEAD_PROCESS",
 	"ACCOUNTING",
+	"DOWN_TIME",
 };
 
 int verbose= 0, short_name= 0;
@@ -143,7 +147,7 @@ main( argc, argv)
 int argc;
 char **argv;
 {  char *utmp_name=
-#ifdef sgi
+#if defined(sgi) || defined(__sun)
 	"/etc/utmpx",
 #elif linux
 	_PATH_UTMP,
@@ -332,7 +336,7 @@ char **argv;
 #else	
 				"unsupplied",
 #endif
-#ifndef sgi
+#if !defined(sgi) && !defined(__sun)
 				"T=",
 				ctime( &utmp->ut_time)
 #else
@@ -349,7 +353,7 @@ char **argv;
 #else	
 				"unsupplied",
 #endif
-#ifndef sgi
+#if !defined(sgi) && !defined(__sun)
 				"T=",
 				ctime( &utmp->ut_time)
 #else

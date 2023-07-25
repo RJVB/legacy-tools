@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <string.h>
 #include <sys/param.h>
 
 #include <errno.h>
@@ -42,7 +43,7 @@
 #endif
 
 
-IDENTIFY( "Simple Mac OS X python wrapper to launch the Python framework as #!/usr/local/bin/python[w] in .py scrips. (C) 2005 RJVB" );
+IDENTIFY( "Simple binary executable wrapper to launch shell scripts of the same name. (C) 2012 RJVB" );
 
 /* concat2(): concats a number of strings; reallocates the first, returning a pointer to the
  \ new area. Caution: a NULL-pointer is accepted as a first argument: passing a single NULL-pointer
@@ -110,23 +111,58 @@ char *setenv( const char *n, const char *v, int overwrite_ignored )
 }
 #endif
 
-/* The settings file can be used to specify another path to the actual executable */
-#define SETTINGS	"/usr/local/etc/python-local-settings"
-/* The following path to the system's python application should always work, as long as the framework remains put: */
-#define PYTHON	"/System/Library/Frameworks/Python.framework/Versions/Current/Resources/Python.app/Contents/MacOS/Python"
+char *strrstr(const char *a, const char *b)
+{ unsigned int lena, lenb, l=0;
+  int success= 0;
+  char *c;
+	
+	lena=strlen(a);
+	lenb=strlen(b);
+	l = lena - lenb;
+	c = &a[l];
+	do{
+		while( l > 0 && *c!= *b){
+			c--;
+			l -= 1;
+		}
+		if( c== a && *c!= *b ){
+			return(NULL);
+		}
+		if( !(success= !strncmp( c, b, lenb)) ){
+			if( l > 0 ){
+				c--;
+				l -= 1;
+			}
+		}
+	} while( !success && l > 0 );
+	if( !success ){
+		return(NULL);
+	}
+	else{
+		return(c);
+	}
+}
 
-main( int argc, char *argv[] )
-{ char *epywopts= NULL /* getenv("PYTHONWOPTS") */;
-  char *pywopts= NULL;
-  char python[MAXPATHLEN];
+/* The settings file can be used to specify another path to the actual executable */
+#define SETTINGS	"/usr/local/etc/shlaunch-local-settings"
+
+int main( int argc, char *argv[] )
+{ char *pywopts= NULL;
+  char shlaunch[MAXPATHLEN];
   char settings[MAXPATHLEN]= SETTINGS;
   FILE *fp= NULL;
-  char buf[MAXPATHLEN], *arg1 = NULL;
+  char buf[MAXPATHLEN];
 
-	python[0]= '\0';
+	shlaunch[0]= '\0';
 	if( (argv[0]= basename(argv[0])) ){
 		sprintf( settings, "/usr/local/etc/%s-local-settings", argv[0] );
 		fp= fopen(settings, "r");
+		strncpy( shlaunch, argv[0], sizeof(shlaunch)-1 );
+		{ char *c = strrstr( shlaunch, ".exe" );
+			if( c ){
+				*c = '\0';
+			}
+		}
 	}
 	if( !fp ){
 		fp= fopen(settings, "r");
@@ -142,32 +178,21 @@ main( int argc, char *argv[] )
 					buf[l]= '\0';
 				}
 				if( *buf ){
-#undef BINARY
-#define BINARY	"python"
-					if( strncmp( buf, BINARY "=", strlen(BINARY)+1 )== 0 ){
-					  char *c= &buf[strlen(BINARY)+1], *d;
+					if( strncmp( buf, "command=", 8 )== 0 ){
+					  char *c= &buf[8];
 						while( c && *c && isspace(*c) ){
 							c++;
 						}
-						d = c;
-						while( d && *d && !isspace(*d) ){
-							d++;
-						}
-						if( isspace(*d) ){
-							*d = '\0';
-							arg1 = &d[1];
-						}
 						if( c && *c ){
-							strcpy( python, c);
+							strcpy( shlaunch, c);
 						}
 					}
 					else{
 					  char *c = strchr( buf, '=' );
-// 20091126: since Python doesn't handle PYTHONWOPTS as an env.var, we just interpret extra lines
+// We just interpret extra lines
 // without special keywords as variables to store in the environment. A typical line would be
 // MACOSX_DEPLOYMENT_TARGET=10.4
 // if that variable isn't set by default (which would seem to be a good idea).
-// 						pywopts= concat2( pywopts, ((pywopts)? ":" : ""), buf, 0 );
 						if( c ){
 							*c = '\0';
 							setenv( buf, &c[1], 1 );
@@ -178,19 +203,10 @@ main( int argc, char *argv[] )
 				}
 			}
 #ifdef DEBUG
-			else{
-				fprintf( stderr, "%s: python=\"%s\", (ignored) options=\"%s\"\n", argv[0], python, (pywopts)? pywopts : "<none>" );
-			}
+			fprintf( stderr, "%s: shlaunch=\"%s\", (ignored) options=\"%s\"\n", argv[0], shlaunch, (pywopts)? pywopts : "<none>" );
 #endif
 		}
 		fclose(fp);
-	}
-	if( epywopts && (!pywopts || strcmp( pywopts, epywopts)) ){
-		pywopts= concat2( pywopts, ((pywopts)? ":" : ""), epywopts, 0 );
-	}
-	if( pywopts ){
-	  /* all this is dummy code: python has no env.var checked for options */
-		setenv( "PYTHONWOPTS", pywopts, 1);
 	}
 // 	{ int i, j;
 // 	  int hit= 0;
@@ -204,62 +220,20 @@ main( int argc, char *argv[] )
 // 		}
 // 	}
 
-	if( arg1 ){
-	  static char **av;
-	  int i;
-		if( (av = (char**) calloc( argc+1, sizeof(char*) )) ){
-			av[0] = argv[0];
-			av[1] = arg1;
-			for( i = 1 ; i < argc ; i++ ){
-				av[i+1] = argv[i];
-			}
-			argv = av;
-			argc += 1;
-		}
-	}
-	if( !*python ){
-	  double version;
-	  char *vstring;
-		if( argv[0][6] == 'w' ){
-			vstring = &argv[0][7];
-		}
-		else{
-			vstring = &argv[0][6];
-		}
-		version = strtod( vstring, NULL );
-		if( version > 0 ){
-			snprintf( python, MAXPATHLEN,
-				"/Library/Frameworks/Python%s.framework/Versions/Current/Resources/Python.app/Contents/MacOS/Python",
-				vstring
-			);
-		}
-		else{
-			strncpy( python, PYTHON, sizeof(python)/sizeof(char)-1 );
-		}
-	}
 #ifdef DEBUG
 	{ int i;
-		fprintf( stderr, "%s: execv(\"%s\"", argv[0], python );
+		fprintf( stderr, "%s: execv(\"%s\"", argv[0], shlaunch );
 		for( i= 1; i< argc; i++ ){
 			fprintf( stderr, ",\"%s\"", argv[i] );
 		}
 		fputs( "\n", stderr );
 	}
 #endif
-	if( *python ){
-		  /* In the case of pythonw on Mac OS X, the actual binary wants to be called by its true name.
-		   \ Otherwise, it won't connect to the windowing environment, which is the sole purpose of
-		   \ calling python through pythonw. This is also the reason why a simple symlink to Python
-		   \ won't have the desired effect, and we have to use this solution. Thus, modify argv[0] .
-		   */
-		if( argc <= 1 ){
-			fprintf( stderr, "RJVB %s launching ", basename(argv[0]) );
-			fflush( stderr );
-		}
-		argv[0]= python;
-		execv( python, argv );
+	if( *shlaunch ){
+		argv[0]= shlaunch;
+		execv( shlaunch, argv );
 		  /* not reached unless error */
-		fprintf( stderr, "%s: ", python );
+		fprintf( stderr, "%s: ", shlaunch );
 		perror( "Can't execute" );
 		exit(errno);
 	}

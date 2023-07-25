@@ -8,6 +8,7 @@
 #include <local/cx.h>			/* just to have everything needed	*/
 #include <local/mxt.h>
 #include "local/Macros.h"
+#include "local/64typedefs.h"
 #include <ctype.h>
 #ifdef CONSOLE_CONFIG
 	#include <local/fopenw.h>
@@ -59,7 +60,7 @@ int maincall;
 			if( i && i % 8== 0)
 				fputc( ':', stderr);
 		}
-		if( sizeof(x) == 4 ){
+		if( sizeof(x) == 4 || ((unsigned long)x <= 0xffffffff) ){
 		  char *fourcharcode = (char*) &x;
 			fprintf( stderr, " = '%c", fourcharcode[0] );
 			for( i= 1; i< 4; i++ ){
@@ -71,8 +72,7 @@ int maincall;
 	}
 }
 
-void prido(x)											/* print a double	*/
-double x;
+void prido(double x)											/* print a double	*/
 {   long xl;
 	int i, j;
 	double longmax= (double)((long)0x7fffffff),
@@ -109,10 +109,16 @@ double x;
 		else{
 #ifdef FP_BINARY
 		register unsigned char *c;
-		IEEEfp *ie= &x;
+		IEEEfp *ie= (IEEEfp*) &x;
 			c= (unsigned char*) &x;
 			fputs( " = 0x", stderr);
-			fprintf( stderr, "%08lx:%08lx", ie->l.high, ie->l.low );
+			if( sizeof(long) == sizeof(double) ){
+ 				fprintf( stderr, "%08x:%08x", ie->l.high, ie->l.low );
+// 				fprintf( stderr, "%x", ie->ui );
+			}
+			else{
+				fprintf( stderr, "%08lx:%08lx", ie->l.high, ie->l.low );
+			}
 /* 			for( i= 0; i< sizeof( double); i+= sizeof(long) ){	*/
 /* 				fprintf( stderr, "%lx", *((long*)&c[i]) );	*/
 /* 				if( i < sizeof(double)- sizeof(long) )	*/
@@ -177,8 +183,8 @@ char *arg;
 		return;
 	}
 	else if( len == 5 && arg[0] == '#' ){
-		xl = *( (long*) &arg[1] );
-		xd = (double) xl;
+	  uint32 uxl = *( (uint32*) &arg[1] );
+		xd = (double) uxl;
 		return;
 	}
 	else if( len> 1 && !isdigit( arg[1])){		/* number	*/
@@ -240,8 +246,8 @@ char *arg;
 		return;
 	}
 	else if( len == 5 && arg[0] == '#' ){
-		xl = *( (long*) &arg[1] );
-		xd = (double) xl;
+	  uint32 uxl = *( (uint32*) &arg[1] );
+		xd = (double) uxl;
 		return;
 	}
 	else if( len> 1 && !isdigit( arg[1])){

@@ -6,6 +6,11 @@
 #include <sys/stat.h>
 #include <time.h>
 
+#ifdef __GCCOPT__
+#	include <local/Macros.h>
+	IDENTIFY( "File timestamp utility" );
+#endif
+
 int time_stamp( fp, name)
 FILE *fp;
 char *name;
@@ -44,13 +49,13 @@ char *name;
 					tm->tm_year+= 1;
 				}
 			}
-#ifdef __APPLE__
-				tm->tm_year += 1900;
-#endif
 			if( verbose){
 				fprintf( fp, "%s: %s", name, asctime(tm) );
 			}
 			else{
+#ifdef __APPLE__
+ 				tm->tm_year += 1900;
+#endif
 				fprintf( stderr, "(%lu)", Stat.st_mtime );
 				fflush(stderr);
 #if defined(__hpux) 

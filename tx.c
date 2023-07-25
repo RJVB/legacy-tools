@@ -40,7 +40,8 @@ vi:set sw=4:
 
 IDENTIFY("simple tab-expansion/line-wrapping filter");
 
-char *calloc();
+// this hasn't been required since a looong time:
+// char *calloc();
 
 #ifndef serror
 //#	define serror() ((errno>0&&errno<sys_nerr)?sys_errlist[errno]:"invalid errno")
@@ -77,6 +78,7 @@ help(char **argv, char *argerr)
 	fprintf( stderr, "\t-pr[command]:\tsend to printer, optionally using <command> as the printing command, else \"%s\"\n", prcom );
 	fprintf( stderr, "\t-w<COLS>:\twrap lines to length <COLS> [also by invoking the program as 'txw<COLS>']\n");
 	fprintf( stderr, "\t-W<COLS>:\tidem, indent wrapped line by <tabstop>/4\n");
+	fprintf( stderr, "\t-ws:\tonly wrap in whitespace (otherwise also after some punctuation characters)\n");
 	exit(10);
 }
 
@@ -208,7 +210,7 @@ main( int argc, char **argv)
 {	REGISTER int i, j= 0, c, r0, r, cnt= 0;
 	int spaces= 0, arg1= 1, insert_cr= 0, verbose= 0, wrap= 0, wrapping= 0, ident= 0,
 		leadwhite= 0, formfeed= 0, quoted_printable= 0, do_quoted_printable= 0, fold_lines= 0, skip= 0;
-	REGISTER char *ss, *iname= NULL, *oname= NULL, *prcommand= NULL, prev_char;
+	REGISTER char *ss, *iname= NULL, *oname= NULL, *prcommand= NULL, prev_char, wrappunct= 1;
 	REGISTER long ttot= 0L, tot= 0L, crtot= 0L, wwrapped= 0, wrapped= 0, qps= 0, fqps= 0, folds= 0,
 		fwrapped= 0, emptylines= 0, doprint= False;
 	int wrap_indent, newline= 0, folded= 0, rm_inpf= False, finfo= False, fopipe= False;
@@ -285,14 +287,19 @@ main( int argc, char **argv)
 				noflush= 1;
 			}
 			else if( argv[arg1][1]== 'w' || argv[arg1][1]== 'W' ){
-				if( isdigit( argv[arg1][2]) ){
-					if( (wrap= atoi( &(argv[arg1][2])) )< 20 )
-						wrap= 20;
+				if( argv[arg1][2] == 's' ){
+					wrappunct = 0;
 				}
 				else{
-					wrap= 80;
+					if( isdigit( argv[arg1][2]) ){
+						if( (wrap= atoi( &(argv[arg1][2])) )< 20 )
+							wrap= 20;
+					}
+					else{
+						wrap= 80;
+					}
+					wrap_indent= (argv[arg1][1]== 'W')? True : False;
 				}
-				wrap_indent= (argv[arg1][1]== 'W')? True : False;
 			}
 			else if( argv[arg1][1]== 'f' ){
 				if( isdigit( argv[arg1][2]) ){
@@ -403,6 +410,9 @@ main( int argc, char **argv)
 		if( (fi== stdin && !fstat(fileno(fi), &st)) || !stat( iname, &st) ){
 			if( (tm= localtime( &(st.st_mtime) )) ){
 			  time_t timer= time(NULL);
+#ifndef L_cuserid
+#	define L_cuserid 128
+#endif
 			  char *tstr= NULL, me[L_cuserid+16], him[L_cuserid+16], them[L_cuserid+16];
 			  struct passwd *pw;
 			  struct group *gr;
@@ -575,8 +585,8 @@ main( int argc, char **argv)
 #endif
 					{
 					  int doit= False, inword;
-#define ISSPACE(ss)	( isspace((unsigned char) *(ss)) && !isspace((unsigned char)(ss)[1]) )
-#define WRAPABLE(ss)	(( ISSPACE(ss) || ispunct((unsigned char) *(ss))) && !ispunct((unsigned char)(ss)[1]) )
+#define ISSPACE(ss) ( isspace((unsigned char) *(ss)) && !isspace((unsigned char)(ss)[1]) )
+#define WRAPABLE(ss) ( (ISSPACE(ss) || (wrappunct && ispunct((unsigned char) *(ss)))) && !ispunct((unsigned char)(ss)[1]) )
 						inword= !WRAPABLE(ss) && !WRAPABLE(last_char);
 						if( cnt>= wrap || (*ss== '\t' && cnt+ spaces>= wrap) ){
 						  /* wrapping needed now	*/
