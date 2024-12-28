@@ -26,8 +26,8 @@ void usage()
 {
 	fprintf(stderr, "%s: Load a library and optionally check if it provides one or more symbols\n", self);
 	fprintf(stderr, "\nUsage:\n");
-	fprintf(stderr, "%s [-i inject1] [[-i inject 2] ...] library [symbol(s)]\n", self);
-	fprintf(stderr, "\t-i inject : inject/insert/preload library `inject`, making its symbols available to the test `library`\n");
+	fprintf(stderr, "%s [-i inject1] [[-i inject2] ...] library [symbol(s)]\n", self);
+	fprintf(stderr, "\t-i prereq : inject/insert/preload library `prereq`, making its symbols available to the test `library`\n");
 	fprintf(stderr, "\tInjection probably requires setting DYLD_FORCE_FLAT_NAMESPACE=1 on Mac/Darwin.\n");
 	fprintf(stderr, "\tSet DLSYM_VERBOSE=1 to trace libraries being loaded, or DLSYM_VERBOSE=2 for more information.\n");
 }
