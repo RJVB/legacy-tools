@@ -407,7 +407,7 @@ int do_whois(const char *whost, const StringList *qhosts, const char *qhost)
 
 /* ================================================== end whois code =============================================== */
 
-int silent = 1, whois = 0, gai_protocol = IPPROTO_TCP;
+int silent = 1, whois = 0, gai_protocol = IPPROTO_TCP, ipv4_then_v6 = 0;;
 
 StringList *wquery = NULL;
 
@@ -598,7 +598,12 @@ int main(int argc, char **argv)
 	static int Argc;
 
 	if ((Argc = argc) < 2) {
-		fprintf(stderr, "usage: [env WHOISS=whois.server.host] %s [-q|-qa|-v|-v2|-w|-w2|-w3|-w4] address..\n", argv[0]);
+		fprintf(stderr, "usage: [env WHOISS=whois.server.host] %s [-q|-qa|-v|-v2|-w|-w2|-w3|-w4|-u|-46] address..\n", argv[0]);
+		fprintf(stderr, "\t-q|-qa : silent mode levels\n");
+		fprintf(stderr, "\t-v|-v2 : verbose mode levels\n");
+		fprintf(stderr, "\t-w* : whois mode with different output levels\n");
+		fprintf(stderr, "\t-u : query UDP instead of TCP protocol\n");
+		fprintf(stderr, "\t-46 : look up IPv4 then IPv6 addresses (try this if you don't see any IPv6 addresses)\n");
 		exit(10);
 	}
 	exename = argv[0];
@@ -630,6 +635,9 @@ int main(int argc, char **argv)
 			goto next_argument;
 		} else if (!strcmp(argv[i], "-u")) {
 			gai_protocol = IPPROTO_UDP;
+			goto next_argument;
+		} else if (!strcmp(argv[i], "-46")) {
+			ipv4_then_v6 = 1;
 			goto next_argument;
 		}
 
@@ -807,10 +815,14 @@ int main(int argc, char **argv)
 			}
 		}
 		if (silent != 2 && silent != 3) {
-			struct addrinfo *res = NULL, hints;
+			struct addrinfo *res = NULL, *res2 = NULL, hints;
 			memset(&hints, 0, sizeof(hints));
 			hints.ai_flags = AI_ADDRCONFIG|AI_V4MAPPED|AI_ALL|AI_CANONNAME;
-			hints.ai_family = AF_UNSPEC;
+			if (ipv4_then_v6) {
+				hints.ai_family = AF_INET;
+			} else {
+				hints.ai_family = AF_UNSPEC;
+			}
 			hints.ai_protocol = gai_protocol;
 			int gai_ret = getaddrinfo(argv[i], NULL, &hints, &res);
 			if (gai_ret == 0) {
@@ -820,14 +832,14 @@ int main(int argc, char **argv)
 						argv[i], (gai_protocol == IPPROTO_TCP)? "TCP" : "UDP");
 				while (r) {
 					char ipaddr[INET6_ADDRSTRLEN+INET_ADDRSTRLEN+1];
-			        if (r->ai_addr->sa_family == AF_INET) {
-			            struct sockaddr_in *addr4 = (struct sockaddr_in *) r->ai_addr;
-			            inet_ntop(AF_INET, &addr4->sin_addr, ipaddr, INET_ADDRSTRLEN);
-			        }
-			        else if (r->ai_addr->sa_family == AF_INET6) {
-			            struct sockaddr_in6 *addr6 = (struct sockaddr_in6 *) r->ai_addr;
-			            inet_ntop(AF_INET6, &addr6->sin6_addr, ipaddr, INET6_ADDRSTRLEN);
-			        }
+					if (r->ai_addr->sa_family == AF_INET) {
+						struct sockaddr_in *addr4 = (struct sockaddr_in *) r->ai_addr;
+						inet_ntop(AF_INET, &addr4->sin_addr, ipaddr, INET_ADDRSTRLEN);
+					}
+					else if (r->ai_addr->sa_family == AF_INET6) {
+						struct sockaddr_in6 *addr6 = (struct sockaddr_in6 *) r->ai_addr;
+						inet_ntop(AF_INET6, &addr6->sin6_addr, ipaddr, INET6_ADDRSTRLEN);
+					}
 					fprintf(stdout, "\t%s [%s] (fam=%s prot=%d)\n",
 							(n == 0)?
 								(r->ai_canonname && strcmp(r->ai_canonname, ipaddr))?
@@ -837,8 +849,18 @@ int main(int argc, char **argv)
 							(r->ai_family == AF_INET6)? "IPv6" : "IPv4",
 							r->ai_protocol);
 					r = r->ai_next, ++n;
+					if (ipv4_then_v6 && !r && !res2) {
+						hints.ai_family = AF_INET6;
+						gai_ret = getaddrinfo(argv[i], NULL, &hints, &res2);
+						if (gai_ret == 0) {
+							r = res2;
+						}
+					}
 				}
 				freeaddrinfo(res);
+				if (res2) {
+					freeaddrinfo(res2);
+				}
 			} else {
 				fprintf(stderr, "## Error from getaddrinfo(\"%s\") for %s: %s\n",
 						argv[i], (gai_protocol == IPPROTO_TCP)? "TCP" : "UDP", gai_strerror(gai_ret));
