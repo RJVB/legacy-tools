@@ -9,8 +9,13 @@ IDENTIFY("dlsym: see man dlsym(3)");
 
 #ifdef linux
 #define __USE_GNU
+#define __RTLD_OPENEXEC 0x20000000
 #endif
 #include <dlfcn.h>
+
+#ifdef linux
+#define __RTLD_OPENEXEC 0x20000000
+#endif
 
 #include <string.h>
 
@@ -87,6 +92,14 @@ int main( int argc, char *argv[] )
 		}
 		lib = dlopen((strlen(argv[first]))? argv[first] : NULL, RTLD_LOCAL|RTLD_NOW);
 		err = (char*) dlerror();
+#ifdef __RTLD_OPENEXEC
+		if (!lib && err && strstr(err, "cannot dynamically load executable")) {
+			lib = dlopen((strlen(argv[first]))? argv[first] : NULL, RTLD_LOCAL|RTLD_NOW|__RTLD_OPENEXEC);
+			err = (char*) dlerror();
+			// dlclose is likely to sigsegv in this case
+			r = 0;
+		}
+#endif
 		if( lib && !err ){
 			for( i = first + 1; i< argc; i++ ){
 			  void *sym = dlsym( (injected)? RTLD_DEFAULT : lib, argv[i] );
@@ -108,15 +121,16 @@ int main( int argc, char *argv[] )
 					);
 				}
 			}
-			dlclose(lib);
-			err = (char*) dlerror();
-			if( err ){
-				fprintf( stderr, "%s: error closing %s (%s)\n",
-					argv[0], argv[first], err
-				);
-			}
-			else{
-				r = 0;
+			if ( r ) {
+				dlclose(lib);
+				err = (char*) dlerror();
+				if( err ){
+					fprintf( stderr, "%s: error closing %s (%s)\n",
+						argv[0], argv[first], err
+					);
+				} else {
+					r = 0;
+				}
 			}
 		}
 		else{
