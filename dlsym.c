@@ -9,12 +9,17 @@ IDENTIFY("dlsym: see man dlsym(3)");
 
 #ifdef linux
 #define __USE_GNU
-#define __RTLD_OPENEXEC 0x20000000
 #endif
 #include <dlfcn.h>
 
 #ifdef linux
-#define __RTLD_OPENEXEC 0x20000000
+#ifndef HIJACK_LIB
+#	define __RTLD_OPENEXEC 0x20000000
+#endif
+#else
+#ifdef HIJACK_LIB
+#	error "-DHIJACK_LIB is supported on Linux only!"
+#endif
 #endif
 
 #include <string.h>
@@ -25,20 +30,34 @@ extern char *sys_errlist[];
 extern char *getenv();
 extern int errno, system();
 
-static const char *self = NULL;
+static const char *self = "libdlsym_hijack";
 
 void usage()
 {
+#ifndef HIJACK_LIB
 	fprintf(stderr, "%s: Load a library and optionally check if it provides one or more symbols\n", self);
 	fprintf(stderr, "\nUsage:\n");
 	fprintf(stderr, "%s [-i inject1] [[-i inject2] ...] library [symbol(s)]\n", self);
 	fprintf(stderr, "\t-i prereq : inject/insert/preload library `prereq`, making its symbols available to the test `library`\n");
+#ifdef __MACH__
 	fprintf(stderr, "\tInjection probably requires setting DYLD_FORCE_FLAT_NAMESPACE=1 on Mac/Darwin.\n");
+#endif
 	fprintf(stderr, "\tSet DLSYM_VERBOSE=1 to trace libraries being loaded, or DLSYM_VERBOSE=2 for more information.\n");
+#else
+	fprintf(stderr, "%s: hijack an executable and optionally check if it if can access one or more symbols (and via/from which shared library)\n", self);
+	fprintf(stderr, "\nUsage:\n");
+	fprintf(stderr, "env LD_PRELOAD=%s executable [-i inject1] [[-i inject2] ...] [symbol(s)]\n", self);
+	fprintf(stderr, "\t-i prereq : inject/insert/preload library `prereq`, making its symbols available to the test `library`\n");
+	fprintf(stderr, "\tSet DLSYM_VERBOSE=1 to trace libraries being loaded, or DLSYM_VERBOSE=2 for more information.\n");
+#endif
 }
 
+#ifndef HIJACK_LIB
 int main( int argc, char *argv[] )
-{ int i, r = 1;
+#else
+int __libc_start_main(int (*main) (int, char **, char **), int argc, char *argv[])
+#endif
+{ int i, r = 1, min_argc, first_symbol;
   void *lib;
 #if defined(__MACH__) || defined(__APPLE_CC__) || defined(__USE_GNU)
   Dl_info info;
@@ -60,8 +79,13 @@ int main( int argc, char *argv[] )
 		perror("oops");
 		exit(-1);
 	}
+#ifndef HIJACK_LIB
 	self = basename(argv[0]);
-	if( argc> 1 ){
+	min_argc = 1;
+#else
+	min_argc = 0;
+#endif
+	if( argc > min_argc ){
 	  char *err;
 	  int first = 1, injected = 0;
 		for (i = 1 ; i < argc && strncmp(argv[i], "-i", 2) == 0; ++i) {
@@ -84,16 +108,43 @@ int main( int argc, char *argv[] )
 				exit(-1);
 			}
 		}
+#ifndef HIJACK_LIB
 		if (i < argc) {
 			first = i;
 		} else {
 			usage();
 			exit(-1);
 		}
-		lib = dlopen((strlen(argv[first]))? argv[first] : NULL, RTLD_LOCAL|RTLD_NOW);
+		first_symbol = first + 1;
+#else
+		// the first argument (= the file to dlopen) is the executable we're launching, so argv[0]
+		first = 0;
+		if (i < argc || argc == 1) {
+			first_symbol = i;
+		} else {
+			usage();
+			exit(-1);
+		}
+#endif
+
+#ifndef HIJACK_LIB
+		if (!strlen(argv[first])) {
+			lib = dlopen(NULL, RTLD_LOCAL|RTLD_NOW);
+			argv[first] = argv[0];
+		} else {
+			lib = dlopen(argv[first], RTLD_LOCAL|RTLD_NOW);
+		}
+#else
+		// the "lib" we want is the current executable we're hijacking, which we can
+		// get by handing NULL to dlopen
+		lib = dlopen(NULL, RTLD_LOCAL|RTLD_NOW);
+		fprintf(stderr, "## \"dlopened\" %s (lib=%p)\n", argv[first], lib);
+		r = 0;
+#endif
 		err = (char*) dlerror();
 #ifdef __RTLD_OPENEXEC
 		if (!lib && err && strstr(err, "cannot dynamically load executable")) {
+			// let's try to be naughty and see what happens!
 			lib = dlopen((strlen(argv[first]))? argv[first] : NULL, RTLD_LOCAL|RTLD_NOW|__RTLD_OPENEXEC);
 			err = (char*) dlerror();
 			// dlclose is likely to sigsegv in this case
@@ -101,7 +152,7 @@ int main( int argc, char *argv[] )
 		}
 #endif
 		if( lib && !err ){
-			for( i = first + 1; i< argc; i++ ){
+			for( i = first_symbol; i< argc; i++ ){
 			  void *sym = dlsym( (injected)? RTLD_DEFAULT : lib, argv[i] );
 				err = (char*) dlerror();
 				if( sym && !err ){
