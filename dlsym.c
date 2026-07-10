@@ -1,5 +1,12 @@
 #include "local/Macros.h"
+
+#define LIBHIJACK_NAME "libdlsym_hijack.so"
+
+#ifndef HIJACK_LIB
 IDENTIFY("dlsym: see man dlsym(3)");
+#else
+IDENTIFY("libdlsym_hijack.so: see man dlsym(3)");
+#endif
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -30,7 +37,7 @@ extern char *sys_errlist[];
 extern char *getenv();
 extern int errno, system();
 
-static const char *self = "libdlsym_hijack";
+static const char *self = LIBHIJACK_NAME;
 
 void usage()
 {
