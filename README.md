@@ -4,7 +4,7 @@ A number of these will require my equally old "cx" library
 
 ## dlsym.c
 
-This can be built as an executable that acts like a commandline interface to `dlopen(2)`, `dlsym(2)` and `dladdr(2)` with an additional feature to inject shared libraries:
+This can be built as an executable that acts like a commandline interface to `dlopen(3)`, `dlsym(3)` and `dladdr(3)` with an additional feature to inject shared libraries:
 
 ```
 > dlsym [-i inject1] [[-i inject2] ...] library [symbol(s)]
