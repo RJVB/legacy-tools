@@ -63,6 +63,9 @@ void usage()
 	fprintf(stderr, "\t-i prereq : inject/insert/preload library `prereq`, making its symbols available to the test `library`\n");
 	fprintf(stderr, "\tSet DLSYM_VERBOSE=1 to trace libraries being loaded, or DLSYM_VERBOSE=2 for more information.\n");
 #endif
+	fprintf(stderr, "\tNB Files are opened using the dlopen(3) function, according to platform-specific rules.\n");
+	fprintf(stderr, "\t   concerning the locations that are searched for them. It may thus be necessary to\n");
+	fprintf(stderr, "\t   prepend './' to libraries in the current directory if they are reported missing!\n");
 }
 
 #ifndef HIJACK_LIB
@@ -116,7 +119,7 @@ int BELOW_MAIN_FNC(int (*main) (int, char **, char **), int argc, char *argv[])
 					injected += 1;
 				}
 			} else {
-				fprintf(stderr, "Error: invalid argument \"%s\"\n", argv[i-1]);
+				fprintf(stderr, "Error: argument \"%s\" must be followed by a filename\n", argv[i-1]);
 				usage();
 				exit(-1);
 			}
@@ -132,7 +135,7 @@ int BELOW_MAIN_FNC(int (*main) (int, char **, char **), int argc, char *argv[])
 #else
 		// the first argument (= the file to dlopen) is the executable we're launching, so argv[0]
 		first = 0;
-		if (i < argc || argc == 1) {
+		if (i <= argc) {
 			first_symbol = i;
 		} else {
 			usage();
@@ -160,6 +163,10 @@ int BELOW_MAIN_FNC(int (*main) (int, char **, char **), int argc, char *argv[])
 			// let's try to be naughty and see what happens!
 			lib = dlopen((strlen(argv[first]))? argv[first] : NULL, RTLD_LOCAL|RTLD_NOW|__RTLD_OPENEXEC);
 			err = (char*) dlerror();
+			if (strstr(err, "invalid mode parameter")) {
+				// no need to report an error that is of our (instead of the user's) doing:
+				err = "cannot dynamically load executable";
+			}
 			// dlclose is likely to sigsegv in this case
 			r = 0;
 		}
@@ -173,7 +180,12 @@ int BELOW_MAIN_FNC(int (*main) (int, char **, char **), int argc, char *argv[])
 #if defined(__MACH__) || defined(__APPLE_CC__) || defined(__USE_GNU)
 					if( sym ){
 						if( dladdr( sym, &info) ){
-							fprintf( stderr, " (%s::%s)", info.dli_fname, info.dli_sname );
+							fprintf( stderr, " (%s::%s", info.dli_fname, info.dli_sname );
+							if (info.dli_saddr != sym) {
+								fprintf( stderr, "@%p)", info.dli_saddr );
+							} else {
+								fputc(')', stderr);
+							}
 						}
 					}
 #endif

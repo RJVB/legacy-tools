@@ -1,0 +1,12 @@
+TARGET=dlsym
+TARGET2=lib$(TARGET)_hijack.so
+CC=gccopt
+
+all: $(TARGET) $(TARGET2)
+	touch .make_success
+
+$(TARGET): $(TARGET).c
+	$(CC) -o $(TARGET) $(TARGET).c -ldl -Wl,-rpath,.
+
+$(TARGET2): $(TARGET).c
+	$(CC) -g -O0 -DHIJACK_LIB -fPIC -shared -o $(TARGET2) $(TARGET).c -ldl -Wl,-rpath,.

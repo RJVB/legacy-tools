@@ -12,6 +12,8 @@ This can be built as an executable that acts like a commandline interface to `dl
 
 Here, `library` can be `""` to let the application do lookups in its own memory image (e.g. `dlsym "" dlopen` to know which library provides the `dlopen` function).
 
+NB: build dlsym.c with the current directory added to the rpath (`-Wl,-rpath,.`); this will allow injecting objects from the current directory without having to prepend them with `./`!
+
 On Darwin (aka the Mac's OS) it is possible to load executables with `dlopen` too. On Linux (and possibly on other platforms using the ELF format), this is not supported.
 
 Therefore, the file can also be built as a shared library on Linux:
