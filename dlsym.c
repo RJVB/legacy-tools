@@ -22,10 +22,16 @@ IDENTIFY("libdlsym_hijack.so: see man dlsym(3)");
 #ifdef linux
 #ifndef HIJACK_LIB
 #	define __RTLD_OPENEXEC 0x20000000
+#else
+// The function just below main(), i.e. the one that calls an application's main() function
+// (inspired by valgrind)
+#	define BELOW_MAIN_FNC	__libc_start_main
 #endif
 #else
 #ifdef HIJACK_LIB
 #	error "-DHIJACK_LIB is supported on Linux only!"
+// NB: not required on Darwin/MACH as dlopen() can load executables there (but the function is called "start").
+// On FreeBSD and Solaris one could try overriding the "_start" function.
 #endif
 #endif
 
@@ -62,7 +68,7 @@ void usage()
 #ifndef HIJACK_LIB
 int main( int argc, char *argv[] )
 #else
-int __libc_start_main(int (*main) (int, char **, char **), int argc, char *argv[])
+int BELOW_MAIN_FNC(int (*main) (int, char **, char **), int argc, char *argv[])
 #endif
 { int i, r = 1, min_argc, first_symbol;
   void *lib;
